@@ -76,10 +76,6 @@ $config->define("seg_energy_stream=s");
 $config->define("seg_api_url=s");
 $config->define("web_server_enabled=s");
 $config->define("web_server_port=s");
-$config->define("pvoutput_secondinverter=s");
-$config->define("pvoutput_second_serial=s");
-$config->define("pvoutput_system2_id=s");
-$config->define("pvoutput_api_key2=s");
 
 $config->define("configFile=s");
 $config->args();
@@ -698,30 +694,18 @@ while (TRUE) {
 	    my $str ="";
 	    chomp($pv_date);
 	    chomp($pv_time);
-	    #check if we're connecting to one or two inverters. 
-	    #print("inver: .$inverters{$inverter}{"serial"}. \n ");
-	    $str=$inverters{$inverter}{"serial"};
+	    
 	    pmu_log("Working with inverter with serial number: $str , check ");
-	    print("test \n");
-	    if($config->pvoutput_secondinverter && ($config->pvoutput_second_serial eq $inverters{$inverter}{"serial"})   ) {
-		my $pvoutput_api_key = $config->pvoutput_api_key2;
-		my $pvoutput_system_id = $config->pvoutput_system2_id;
-		my $pvoutput_add_status_url = $config->pvoutput_add_status_url;
-		my $cmd = `curl -m 30 -s -d "d=$pv_date" -d "t=$pv_time" -d "v1=$e_today_wh" -d "v2=$pac" -d "v5=$temp" -d "v6=$volts" -H "X-Pvoutput-Apikey:$pvoutput_api_key" -H "X-Pvoutput-SystemId:$pvoutput_system_id" $pvoutput_add_status_url 2>&1 `;
-		chomp($cmd);
-		pmu_log("Uploading second inverter to pvoutput.org, response: $cmd");
-
-
-	    }
-	    else
-	    {
-		my $pvoutput_api_key = $config->pvoutput_api_key;
-		my $pvoutput_system_id = $config->pvoutput_system_id;
-		my $pvoutput_add_status_url = $config->pvoutput_add_status_url;
-		my $cmd = `curl -m 30 -s -d "d=$pv_date" -d "t=$pv_time" -d "v1=$e_today_wh" -d "v2=$pac" -d "v5=$temp" -d "v6=$volts" -H "X-Pvoutput-Apikey:$pvoutput_api_key" -H "X-Pvoutput-SystemId:$pvoutput_system_id" $pvoutput_add_status_url 2>&1 `;
-		chomp($cmd);
-		pmu_log("Uploading to pvoutput.org, response: $cmd (SystemID: $pvoutput_system_id)");
-	    }
+	    
+	    my $pvoutput_api_key = $config->pvoutput_api_key;
+	    my $pvoutput_system_id = $config->pvoutput_system_id;
+            my $inverter_serial = $inverters{$inverter}{"serial"};
+	    my $system_id = @$pvoutput_system_id{$inverter_serial};
+		
+	    my $pvoutput_add_status_url = $config->pvoutput_add_status_url;
+	    my $cmd = `curl -m 30 -s -d "d=$pv_date" -d "t=$pv_time" -d "v1=$e_today_wh" -d "v2=$pac" -d "v5=$temp" -d "v6=$volts" -H "X-Pvoutput-Apikey:$pvoutput_api_key" -H "X-Pvoutput-SystemId:$system_id" $pvoutput_add_status_url 2>&1 `;
+	    chomp($cmd);
+	    pmu_log("Uploading to pvoutput.org, response: $cmd (SystemID: $system_id)");
 	}
 
 	# send data to seg
